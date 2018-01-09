@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DataVisualization</title>
+</head>
+<body>
+Hello
+<div id="main" style="height:400px"></div>
+<script src="libs/echarts227/echarts.js"></script>
+<script src="js/message.js"></script>
+<script>
+    require.config({
+        paths: {
+            echarts: 'libs/echarts227/'
+        }
+    });
+    var option = {
+        title : {
+            text: '一天内股价变动',
+            subtext: '纯属虚构'
+        },
+        tooltip : {
+            trigger: 'axis'
+        },
+        legend: {
+            data:['实时股价']
+        },
+        toolbox: {
+            show : true,
+            feature : {
+                mark : {show: true},
+                dataView : {show: true, readOnly: false},
+                magicType : {show: true, type: ['line', 'bar']},
+                restore : {show: true},
+                saveAsImage : {show: true}
+            }
+        },
+        calculable : true,
+        xAxis : [
+            {
+                type : 'category',
+                boundaryGap : false,
+                data : []
+            }
+        ],
+        yAxis : [
+            {
+                type : 'value',
+                axisLabel : {
+                    formatter: '{value}元'
+                }
+            }
+        ],
+        series : [
+            {
+                name:'实时股价',
+                type:'line',
+                data:[],
+                markPoint : {
+                    data : [
+                        {type : 'max', name: '最大值'},
+                        {type : 'min', name: '最小值'}
+                    ]
+                },
+                markLine : {
+                    data : [
+                        {type : 'average', name: '平均值'}
+                    ]
+                }
+            }
+        ]
+    };
+    var myChart;
+    require(
+            [
+                'echarts',
+                'echarts/chart/line' // 使用柱状图就加载bar模块，按需加载
+            ],
+            function (ec) {
+                // 基于准备好的dom，初始化echarts图表
+                myChart = ec.init(document.getElementById('main'));
+                // 为echarts对象加载数据
+                myChart.setOption(option);
+            })
+
+    var client=new messageClient("test",function(msg){
+        console.log(msg);
+        var timeStr=formatDate(msg.time);
+        option.xAxis[0].data.push(timeStr);
+        option.series[0].data.push(msg.price.toFixed(2));
+        myChart.setOption(option);
+    })
+
+    client.connect();
+    function  formatDate(time){
+        var date=new Date(time);
+        var hour=date.getHours();
+        var minute=date.getMinutes();
+        var second= date.getSeconds();
+        var timeStr=(hour<10?"0"+hour:hour)+":"+(minute<10?"0"+minute:minute)+":"+(second<10?"0"+second:second);
+        return  timeStr;
+    }
+</script>
+</body>
+</html>
